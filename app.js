@@ -63,6 +63,8 @@ const Product = require("./models/product");
 const User = require("./models/user");
 const Cart = require("./models/cart");
 const CartItem = require("./models/cart-items");
+const WishList = require("./models/wishlist");
+const WishListItem = require("./models/wishlist-item");
 
 // Add the error handler route
 app.use((error, req, res, next) => {
@@ -78,6 +80,13 @@ app.use((error, req, res, next) => {
 // User.hasMany(Product);
 User.hasOne(Cart);
 Cart.belongsTo(User);
+
+User.hasOne(WishList);
+WishList.belongsTo(User);
+
+WishList.belongsToMany(Product, { through: WishListItem });
+Product.belongsToMany(WishList, { through: WishListItem });
+
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
 
