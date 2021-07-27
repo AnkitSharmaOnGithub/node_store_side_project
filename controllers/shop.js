@@ -2,6 +2,9 @@ const Cart = require("../models/cart");
 const CartItem = require("../models/cart-items");
 const Product = require("../models/product");
 const User = require("../models/user");
+const WishList = require("../models/wishlist");
+const WishListItem = require("../models/wishlist-item");
+
 const errorHandler = require("./error.handler");
 const { QueryTypes, Op } = require("sequelize");
 const sequelize = require("../utils/database");
@@ -169,7 +172,72 @@ exports.test = async (req, res, next) => {
   });
 };
 
-exports.getWishlist = async (req, res, next) => {};
+exports.getWishlist = async (req, res, next) => {
+  try {
+    const productId = req.body.id;
+    const userId = req.session.userId;
 
-exports.addToWishlist = async (req, res, next) => {};
+    const wishlist = await WishList.findAll({});
 
+    res.status(200).json({
+      message: "Fetched wishlist",
+      data: wishlist,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.addToWishlist = async (req, res, next) => {
+  try {
+    const productId = req.body.id;
+    const userId = req.session.userId;
+
+    if (!productId) {
+      const error = new Error(`The productId is not provided`);
+      throw errorHandler(error, 404);
+    }
+
+    if (!userId) {
+      const error = new Error(`The userId is not provided`);
+      throw errorHandler(error, 404);
+    }
+
+    const user = await User.findOne({ where: { id: userId } });
+    const wishList = await user.getWishlist();
+    const product = await Product.findOne({ where: { id: productId } });
+
+    // Check if product already exists in WishList
+    const current_wishlist = await product.getWishlists({
+      attributes: [],
+      through: { where: { ProductId: productId } },
+    });
+
+    if (current_wishlist.length > 0) {
+      current_wishlist_product = current_wishlist[0].wishlistitem.ProductId;
+      if (current_wishlist_product == productId) {
+        return res.json({
+          message: "The product already exists in the cart",
+        });
+      }
+    }
+
+    const result = await sequelize.query(
+      `
+    INSERT INTO wishlistitems(wishlistId,ProductId) VALUES (
+      ${parseInt(wishList.id)},
+      ${parseInt(product.id)}
+    )`,
+      { type: QueryTypes.INSERT },
+      { logging: console.log }
+    );
+
+    res.status(200).json({
+      message: "Added product to wishlist",
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
