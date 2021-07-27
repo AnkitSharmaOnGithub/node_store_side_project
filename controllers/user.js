@@ -21,6 +21,8 @@ exports.signUp = async (req, res, next) => {
     });
 
     const cart = await new_user.createCart();
+    
+    const wishlist = await new_user.createWishlist();
     const result = await new_user.save();
 
     return res.json({
