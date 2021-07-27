@@ -4,6 +4,7 @@ const router = express.Router();
 // Imported Controller
 const shopController = require("../controllers/shop");
 const isAuth = require("../middleware/is-auth");
+const WishList = require("../models/wishlist");
 
 // Setting router to handle different paths
 
@@ -27,6 +28,7 @@ router.get("/wishlist", isAuth, shopController.getWishlist);
 
 router.post("/wishlist", isAuth, shopController.addToWishlist);
 
+// ########## Get product
 
 router.get("/:id", shopController.getProduct);
 
