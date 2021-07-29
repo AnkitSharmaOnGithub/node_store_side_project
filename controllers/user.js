@@ -3,9 +3,17 @@ const Cart = require("../models/cart");
 const bcrypt = require("bcryptjs");
 const errorHandler = require("./error.handler");
 const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
 
 exports.signUp = async (req, res, next) => {
   const { email, password } = req.body;
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: errors.array(),
+    });
+  }
 
   try {
     const user = await User.findOne({ where: { email: email } });
@@ -21,13 +29,14 @@ exports.signUp = async (req, res, next) => {
     });
 
     const cart = await new_user.createCart();
-    
+
     const wishlist = await new_user.createWishlist();
     const result = await new_user.save();
 
     return res.json({
       message: "User created",
-      data: result,
+      status: true,
+      // data: result,
     });
   } catch (error) {
     next(error);
@@ -45,7 +54,7 @@ exports.signIn = async (req, res, next) => {
       throw errorHandler(error);
     }
 
-    const password_matched = bcrypt.compare(password, user.password);
+    const password_matched = await bcrypt.compare(password, user.password);
 
     if (!password_matched) {
       const error = new Error(`The email or password does not match`);
