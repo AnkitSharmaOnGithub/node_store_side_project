@@ -12,6 +12,14 @@ const CartItem = sequelize.define("cartitem", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  price: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  totalAmount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
 });
 
 module.exports = CartItem;
