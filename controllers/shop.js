@@ -21,18 +21,47 @@ exports.getAllProducts = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.id;
+  let productInCart = false;
 
-  Product.findByPk(prodId)
+  Product.findByPk(prodId, {
+    attributes: ["id", "title", "price", "description", "image"],
+  })
     .then((product) => {
       if (!product) {
         const err = new Error(`The product with ID ${prodId} was not found`);
         throw errorHandler(err, 404);
       }
 
-      return res.json({
-        message: "Product found",
-        data: product,
-      });
+      // Check if the product is already in cart. If yes, set some flag
+      Product.findAll({
+        where: { id: prodId },
+        attributes: ["id"],
+        include: {
+          model: Cart,
+          through: { attributes: ["quantity", "cartId", "productId"] },
+        },
+        raw: true,
+      })
+        .then((cartItems) => {
+          if (cartItems.length > 0) {
+            // Check if the product Id in cart is equal to the productId, we are trying to add to cart
+            if (cartItems[0]["carts.cartitem.productId"]) {
+              if (cartItems[0]["carts.cartitem.productId"] == prodId) {
+                // If product is not in cart, then set flag
+                productInCart = true;
+              }
+            }
+          }
+
+          return res.json({
+            productInCart: productInCart,
+            message: "Product found",
+            product: product,
+          });
+        })
+        .catch((err) => {
+          throw errorHandler(err);
+        });
     })
     .catch((err) => {
       next(err);
@@ -52,9 +81,10 @@ exports.addToCart = async (req, res, next) => {
         u.id as 'user_id',
         p.id as 'product_id',
         p.title as 'product_title',
-        p.price as 'product _price',
+        p.price as 'product_price',
         p.image as 'product_image',
-        ci.quantity as 'cart_quantity'
+        ci.quantity as 'cart_quantity',
+        ci.totalAmount as 'total_amount'
       from
         carts c
       left join users u
@@ -85,7 +115,12 @@ exports.addToCart = async (req, res, next) => {
         // If yes, then increment the quantity
 
         addCartResult = await CartItem.update(
-          { quantity: parseInt(cartProduct.cart_quantity) + 1 },
+          {
+            quantity: parseInt(cartProduct.cart_quantity) + 1,
+            totalAmount:
+              parseInt(cartProduct.product_price) *
+              (parseInt(cartProduct.cart_quantity) + 1),
+          },
           {
             where: {
               [Op.and]: [
@@ -105,7 +140,7 @@ exports.addToCart = async (req, res, next) => {
     }
     // If not, then add it to cart and set value as 1
     if (!exists_in_cart) {
-      console.log("Adding to cart");
+      // console.log("Adding to cart");
 
       // Fetch cart_id for the user
       const userCartId = await sequelize.query(
@@ -114,19 +149,34 @@ exports.addToCart = async (req, res, next) => {
         { logging: console.log }
       );
 
+      // Get Product price to insert in DB
+      const product_to_add = await Product.findOne(
+        {
+          where: { id: parseInt(productId) },
+          attributes: ["price"],
+          raw: true,
+        },
+        { logging: console.log }
+      );
+
       addCartResult = await CartItem.create(
         {
           quantity: 1,
           cartId: parseInt(userCartId[0].id),
           ProductId: parseInt(productId),
-        },
-        { logging: console.log }
+          price: product_to_add.price,
+          totalAmount: product_to_add.price * 1,
+        }
+        // { logging: console.log }
       );
     }
 
-    res.status(200).json(addCartResult);
+    res.status(200).json({
+      status: "success",
+      data: addCartResult,
+    });
   } catch (error) {
-    res.json(error);
+    next(error);
   }
 };
 
@@ -141,13 +191,14 @@ exports.getCart = async (req, res, next) => {
         {
           attributes: ["id", "title", "price", "image"],
           model: Product,
-          through: { attributes: ["quantity", "productId"] },
+          through: { attributes: ["quantity", "productId","totalAmount"] },
         },
       ],
     });
 
     res.json({
-      cartData: cart,
+      message: "success",
+      data: cart,
     });
   } catch (err) {
     res.json(err);
