@@ -15,7 +15,16 @@ const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 
 // Configuroding 3rd party libraries
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+// Setting CORS headers
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
 
 // Setting swagger options
 const swaggerOptions = {
