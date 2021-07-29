@@ -16,10 +16,10 @@ const WishList = require("../models/wishlist");
  *    responses:
  *      '200':
  *          description : A successful response containing all products */
-router.get("/", shopController.getAllProducts);
+router.get("/products", shopController.getAllProducts);
 
 // ########## Cart Routes
-router.get("/getCart", isAuth, shopController.getCart);
+router.get("/cart", isAuth, shopController.getCart);
 
 router.post("/addToCart", isAuth, shopController.addToCart);
 
@@ -30,6 +30,6 @@ router.post("/wishlist", isAuth, shopController.addToWishlist);
 
 // ########## Get product
 
-router.get("/:id", shopController.getProduct);
+router.get("/product/:id", shopController.getProduct);
 
 module.exports = router;
