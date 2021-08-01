@@ -16,7 +16,7 @@ const swaggerUi = require("swagger-ui-express");
 
 // Configuroding 3rd party libraries
 app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // Setting CORS headers
 app.use((req, res, next) => {
