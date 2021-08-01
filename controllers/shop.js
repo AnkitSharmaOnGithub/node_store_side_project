@@ -405,3 +405,8 @@ exports.payment_cancel = (req, res, next) => {
   });
 };
 
+// Coupon Handers
+
+exports.getCoupon = (req, res, next) => {};
+
+exports.createCoupon = (req, res, next) => {};
