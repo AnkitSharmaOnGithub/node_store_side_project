@@ -350,3 +350,41 @@ exports.addToWishlist = async (req, res, next) => {
     next(err);
   }
 };
+
+// Stripe Handlers
+
+exports.createSession = async (req, res, next) => {
+  try {
+    // Get product details
+    const { stripeToken } = req.body;
+
+    stripe.charges
+      .create({
+        amount: 1000,
+        currency: "inr",
+        source: stripeToken.id,
+        capture: false, // note that capture: false
+      })
+      .then((chargeObject) => {
+        // do something in success here
+        console.log("Charges created");
+
+        stripe.charges
+          .capture(chargeObject.id)
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      })
+      .catch((error) => {
+        // do something in error here
+        console.log(error);
+      });
+  } catch (err) {
+    console.log(err);
+    res.json(err);
+  }
+};
+
