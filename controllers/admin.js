@@ -196,3 +196,48 @@ exports.generateParentCoupon = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.generateChildCoupon = async (req, res, next) => {
+  try {
+    const {
+      parent_key,
+      child_discount_code,
+      start_date,
+      end_date,
+      linked_user_id,
+    } = req.body;
+
+    const props = {
+      parent_key: parent_key,
+      child_discount_code: child_discount_code,
+      start_date: start_date,
+      end_date: end_date,
+      linked_user_id: linked_user_id,
+    };
+
+    // #TODO Check if the fields to be entered in DB are not empty
+
+    for (const prop in props) {
+      // Check if each of the props is not empty
+      if (!props[prop]) {
+        const error = new Error(
+          `${prop} cannot be empty. Please enter the ${prop} and try again.`
+        );
+        throw errorHandler(error);
+      }
+    }
+
+
+    // #TODO Check if the parent key is present in the DB. If yes, set the ParentCouponId(Foreign Key)
+
+    // #TODO Check if the user with the linked_user_id exists
+
+    // #TODO Check start and end date validations
+
+    // # TODO Check if child_discount_code is unique. Set in DB also -> unique.
+
+    
+  } catch (err) {
+    next(err);
+  }
+};
