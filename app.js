@@ -16,7 +16,7 @@ const swaggerUi = require("swagger-ui-express");
 
 // Configuroding 3rd party libraries
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.urlencoded({ extended: false }));
 
 // Setting CORS headers
 app.use((req, res, next) => {
@@ -74,6 +74,8 @@ const Cart = require("./models/cart");
 const CartItem = require("./models/cart-items");
 const WishList = require("./models/wishlist");
 const WishListItem = require("./models/wishlist-item");
+const ParentCoupon = require("./models/parent-coupon");
+const ChildCoupon = require("./models/child-coupon");
 
 // Add the error handler route
 app.use((error, req, res, next) => {
@@ -98,6 +100,9 @@ Product.belongsToMany(WishList, { through: WishListItem });
 
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
+
+ParentCoupon.hasMany(ChildCoupon);
+ChildCoupon.belongsTo(ParentCoupon);
 
 // Syncing sequelize models with the database
 sequelize
