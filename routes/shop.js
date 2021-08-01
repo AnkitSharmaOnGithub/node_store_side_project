@@ -23,6 +23,8 @@ router.get("/cart", isAuth, shopController.getCart);
 
 router.post("/addToCart", isAuth, shopController.addToCart);
 
+router.patch("/cart", shopController.updateCart);
+
 // ########## Wishlist Routes
 router.get("/wishlist", isAuth, shopController.getWishlist);
 
@@ -32,4 +34,10 @@ router.post("/wishlist", isAuth, shopController.addToWishlist);
 
 router.get("/product/:id", shopController.getProduct);
 
-module.exports = router;
+// ########## Stripe Routes
+
+router.post("/payment", shopController.createSession);
+
+router.get("/payment_success", shopController.createSession);
+
+router.get("/payment_cancel", shopController.createSession);
