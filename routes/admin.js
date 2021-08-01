@@ -20,7 +20,7 @@ const isAuth = require("../middleware/is-auth");
                     description: A JSON array of products and a message
 */
 
-router.get('/product',isAuth, adminController.getProducts)
+router.get("/product", isAuth, adminController.getProducts);
 
 router.post("/product", isAuth, adminController.postProduct);
 
@@ -29,5 +29,9 @@ router.get("/product/:id", isAuth, adminController.getProduct);
 router.put("/product/:id", isAuth, adminController.updateProduct);
 
 router.delete("/product/:id", isAuth, adminController.deleteProduct);
+
+// ########## Coupon Routes
+
+router.post("/parent-coupon", adminController.generateParentCoupon);
 
 module.exports = router;
