@@ -1,5 +1,6 @@
 const Product = require("../models/product");
 const errorHandler = require("./error.handler");
+const ParentCoupon = require("../models/parent-coupon");
 
 exports.getProducts = async (req, res, next) => {
   try {
@@ -110,4 +111,72 @@ exports.deleteProduct = async (req, res, next) => {
     .catch((err) => {
       next(err);
     });
+};
+
+exports.generateParentCoupon = async (req, res, next) => {
+  try {
+    const { key, start_date, end_date, discount_amount, num_uses } = req.body;
+    // const props = [key, start_date, end_date, discount_amount];
+    const props = {
+      key: key,
+      start_date: start_date,
+      end_date: end_date,
+      discount_amount: discount_amount,
+    };
+
+    for (const prop in props) {
+      // Check if each of the props is not empty
+      if (!props[prop]) {
+        const error = new Error(
+          `${prop} cannot be empty. Please enter the ${prop} and try again.`
+        );
+        throw errorHandler(error);
+      }
+    }
+
+    // Check if the key exists
+    const coupon_exists = await ParentCoupon.findOne({
+      where: { key: props["key"] },
+      raw: true,
+    });
+
+    if (coupon_exists) {
+      const error = new Error(
+        `Coupon with the key ${props["key"]} already exists`
+      );
+      throw errorHandler(error);
+    }
+
+    /* # TODO Check if the dates are :-
+    
+        START DATE :- Should be greater than current datetime. 
+        END DATE :-  Should be greater than current datetime (Margin ~ 1hr).
+
+    */
+
+    // # TODO Check if discount amount is not zero
+
+    // # TODO Randomize the key in future
+
+    const parentCoupon = await ParentCoupon.build({
+      key: props["key"],
+      start_date: props["start_date"],
+      end_date: props["end_date"],
+      discount_amount: props["discount_amount"],
+    });
+
+    // num_uses is optional, check if it is present. If yes, then add to the DB.
+    if (num_uses) {
+      parentCoupon.num_uses = num_uses;
+    }
+
+    const result = await parentCoupon.save();
+
+    res.json({
+      message: "Parent Coupon Created",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
