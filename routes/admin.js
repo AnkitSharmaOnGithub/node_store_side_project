@@ -34,4 +34,6 @@ router.delete("/product/:id", isAuth, adminController.deleteProduct);
 
 router.post("/parent-coupon", isAuth, adminController.generateParentCoupon);
 
+router.post("/child-coupon", isAuth, adminController.generateChildCoupon);
+
 module.exports = router;
