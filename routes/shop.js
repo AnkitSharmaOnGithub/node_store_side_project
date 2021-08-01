@@ -41,3 +41,9 @@ router.post("/payment", shopController.createSession);
 router.get("/payment_success", shopController.createSession);
 
 router.get("/payment_cancel", shopController.createSession);
+
+// ########## Coupon Routes
+
+router.get("/coupon", shopController.getCoupon);
+
+module.exports = router;
