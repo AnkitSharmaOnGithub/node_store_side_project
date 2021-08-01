@@ -397,3 +397,11 @@ exports.payment_success = (req, res, next) => {
     message: "Success",
   });
 };
+
+exports.payment_cancel = (req, res, next) => {
+  console.log(req);
+  res.json({
+    message: "Cancel",
+  });
+};
+
