@@ -388,3 +388,12 @@ exports.createSession = async (req, res, next) => {
   }
 };
 
+exports.create = function (req, res, next) {};
+
+
+exports.payment_success = (req, res, next) => {
+  console.log(req);
+  return res.json({
+    message: "Success",
+  });
+};
