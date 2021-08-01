@@ -3,11 +3,18 @@ const CartItem = require("../models/cart-items");
 const Product = require("../models/product");
 const User = require("../models/user");
 const WishList = require("../models/wishlist");
-const WishListItem = require("../models/wishlist-item");
 
 const errorHandler = require("./error.handler");
 const { QueryTypes, Op } = require("sequelize");
 const sequelize = require("../utils/database");
+
+// Stripe Initialization
+const Helper = require("../utils/helper");
+
+// Get config from .dotenv
+require("dotenv").config();
+STRIPE_PVT_KEY = process.env.STRIPE_PVT_KEY;
+const stripe = require("stripe")(STRIPE_PVT_KEY);
 
 exports.getAllProducts = (req, res, next) => {
   Product.findAll()
@@ -191,7 +198,7 @@ exports.getCart = async (req, res, next) => {
         {
           attributes: ["id", "title", "price", "image"],
           model: Product,
-          through: { attributes: ["quantity", "productId","totalAmount"] },
+          through: { attributes: ["quantity", "productId", "totalAmount"] },
         },
       ],
     });
