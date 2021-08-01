@@ -147,14 +147,30 @@ exports.generateParentCoupon = async (req, res, next) => {
       throw errorHandler(error);
     }
 
-    /* # TODO Check if the dates are :-
-    
-        START DATE :- Should be greater than current datetime. 
-        END DATE :-  Should be greater than current datetime (Margin ~ 1hr).
-
+    /* # Check if the dates are :-
+        START DATE :- Should be greater than current date. 
+        END DATE :-  Should be greater than current date (Margin ~ 1hr).
     */
 
-    // # TODO Check if discount amount is not zero
+    const currentDate = new Date();
+    const start_date_entered = new Date(props["start_date"]);
+    const end_date_entered = new Date(props["end_date"]);
+
+    if (start_date_entered < currentDate) {
+      const error = new Error(`Start date must be greater than today's date.`);
+      throw errorHandler(error);
+    }
+
+    if (end_date_entered < currentDate) {
+      const error = new Error(`End date must be greater than today's date.`);
+      throw errorHandler(error);
+    }
+
+    if (props["discount_amount"] <= 0) {
+      // Check if discount amount is not zero or lesser than zero
+      const error = new Error(`Discount amount must be greater than 0.`);
+      throw errorHandler(error);
+    }
 
     // # TODO Randomize the key in future
 
