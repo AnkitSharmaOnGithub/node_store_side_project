@@ -212,6 +212,57 @@ exports.getCart = async (req, res, next) => {
   }
 };
 
+exports.updateCart = async (req, res, next) => {
+  try {
+    const userId = req.session.userId;
+    const quantity = req.body.quantity;
+    const productId = +req.body.productId;
+
+    if (!quantity) {
+      const error = new Error(`Quantity is not present in the request`);
+      throw errorHandler(error);
+    }
+
+    if (!productId) {
+      const error = new Error(`ProductId is not present in the request`);
+      throw errorHandler(error);
+    }
+
+    const product = await Product.findOne({
+      attributes: ["id", "price"],
+      where: { id: productId },
+      raw: true,
+    });
+
+    if (+product.id !== +productId) {
+      const error = new Error(`Product Id is not present in the cart`);
+      throw errorHandler(error);
+    }
+
+    // Set the new totalAmount
+    const totalAmount = quantity * +product.price;
+
+    const updateResult = await sequelize.query(
+      `
+        UPDATE cartitems ci
+        SET
+        ci.quantity = ${quantity},
+        ci.totalAmount = ${totalAmount}
+        WHERE
+        ci.ProductId = ${productId}
+      `,
+      { type: QueryTypes.UPDATE }
+    );
+
+    res.json({
+      message: "success",
+      data: updateResult,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.test = async (req, res, next) => {
   let data = await Cart.findAll({
     attributes: [],
