@@ -478,7 +478,7 @@ exports.applyCoupon = async (req, res, next) => {
     }
 
     // Check if coupon exists and is active or not, if the date is within the limit date.
-    const coupon_to_apply = await ChildCoupon.findAll({
+    const coupon_to_apply = await ChildCoupon.findOne({
       attributes: ["id", "num_uses", "start_date", "end_date"],
       where: {
         child_discount_code: discount_code,
@@ -508,20 +508,33 @@ exports.applyCoupon = async (req, res, next) => {
     const coupon_start_date = new Date(coupon_to_apply.start_date);
     const coupon_end_date = new Date(coupon_to_apply.end_date);
 
-    if (currentDate < coupon_start_date || currentDate > coupon_end_date) {
+    if (currentDate < coupon_start_date) {
       const error = new Error(
         `The coupon is not valid during the specified period.`
       );
       throw errorHandler(error);
     }
 
+    if (currentDate > coupon_end_date) {
+      const error = new Error(`The coupon validity period has expired.`);
+      throw errorHandler(error);
+    }
+
     // #TODO If yes, get the user cart and store the coupon against the cart.
+    const result = await Cart.update(
+      {
+        discount_code: discount_code,
+      },
+      { where: { userId: +userId } },
+      { logging: console.log }
+    );
 
     // #####################
     // #TODO During order success, update num_uses by +1 (ANOTHER CONTROLLER).
 
     res.json({
-      data: coupon_to_apply,
+      message: "Coupon successfully applied",
+      data: result,
     });
   } catch (err) {
     next(errorHandler(err));
