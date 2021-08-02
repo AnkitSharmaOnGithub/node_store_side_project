@@ -1,6 +1,8 @@
-const Product = require("../models/product");
 const errorHandler = require("./error.handler");
+const Product = require("../models/product");
+const User = require("../models/user");
 const ParentCoupon = require("../models/parent-coupon");
+const ChildCoupon = require("../models/child-coupon");
 
 exports.getProducts = async (req, res, next) => {
   try {
@@ -199,12 +201,13 @@ exports.generateParentCoupon = async (req, res, next) => {
 
 exports.generateChildCoupon = async (req, res, next) => {
   try {
-    const {
+    let {
       parent_key,
       child_discount_code,
       start_date,
       end_date,
       linked_user_id,
+      num_uses,
     } = req.body;
 
     const props = {
@@ -212,10 +215,10 @@ exports.generateChildCoupon = async (req, res, next) => {
       child_discount_code: child_discount_code,
       start_date: start_date,
       end_date: end_date,
-      linked_user_id: linked_user_id,
+      num_uses: num_uses,
     };
 
-    // #TODO Check if the fields to be entered in DB are not empty
+    // Check if the fields to be entered in DB are not empty
 
     for (const prop in props) {
       // Check if each of the props is not empty
@@ -227,16 +230,102 @@ exports.generateChildCoupon = async (req, res, next) => {
       }
     }
 
+    // Check if the parent key is present in the DB. If yes, set the ParentCouponId(Foreign Key)
+    const parent_exists = await ParentCoupon.findOne({
+      attributes: ["id"],
+      where: { key: props["parent_key"] },
+      raw: true,
+    });
 
-    // #TODO Check if the parent key is present in the DB. If yes, set the ParentCouponId(Foreign Key)
+    if (!parent_exists) {
+      const error = new Error(
+        `A parent coupon with the key ${props["parent_key"]} does not exist.`
+      );
+      throw errorHandler(error);
+    }
+    // #TODO Assign the fetched Parent Coupon id to a variable
+    const parentCouponId = parent_exists.id;
 
-    // #TODO Check if the user with the linked_user_id exists
+    if (linked_user_id) {
+      // Check if the user with the linked_user_id exists
+      const user = await User.findOne({
+        where: { id: props["linked_user_id"] },
+      });
 
-    // #TODO Check start and end date validations
+      if (!user) {
+        const error = new Error(
+          `A user with the ID ${props["linked_user_id"]} does not exist.`
+        );
+        throw errorHandler(error);
+      }
+    }
+    // If no user id is linked, then make it a general coupon
+    else {
+      linked_user_id = 0;
+    }
 
-    // # TODO Check if child_discount_code is unique. Set in DB also -> unique.
+    // Check start and end date validations
 
-    
+    /* # Check if the dates are :-
+        START DATE :- Should be greater than current date. 
+        END DATE :-  Should be greater than current date (Margin ~ 1hr).
+    */
+
+    const currentDate = new Date();
+    const start_date_entered = new Date(props["start_date"]);
+    const end_date_entered = new Date(props["end_date"]);
+
+    if (start_date_entered < currentDate) {
+      const error = new Error(`Start date must be greater than today's date.`);
+      throw errorHandler(error);
+    }
+
+    if (end_date_entered < currentDate) {
+      const error = new Error(`End date must be greater than today's date.`);
+      throw errorHandler(error);
+    }
+
+    // # Check if child_discount_code is unique and is active. Set in DB also -> unique.
+    const child_coupon_code_exists = await ChildCoupon.findOne({
+      attributes: ["id"],
+      where: { child_discount_code: child_discount_code, is_active: 1 },
+    });
+
+    if (child_coupon_code_exists) {
+      const error = new Error(
+        `Child coupon code already exists and is also active`
+      );
+      throw errorHandler(error);
+    }
+
+    // # Check if num_uses is present. If yes, check if it is greater than 0. If not, set it to 1
+    if (num_uses) {
+      if (+num_uses <= 0) {
+        const error = new Error(`Num uses must be greater than 0`);
+        throw errorHandler(error);
+      }
+    } else {
+      num_uses = 1;
+    }
+
+    // # If all validations are passed, Insert the child coupon in the DB.
+    const childCoupon = ChildCoupon.build({
+      parent_key: parent_key,
+      child_discount_code: child_discount_code,
+      start_date: start_date,
+      end_date: end_date,
+      linked_user_id: linked_user_id,
+      is_active: 1,
+      num_uses: num_uses,
+      ParentCouponId: parentCouponId,
+    });
+
+    const result = await childCoupon.save();
+
+    return res.json({
+      message: "Child coupon created successfully.",
+      data: result,
+    });
   } catch (err) {
     next(err);
   }
