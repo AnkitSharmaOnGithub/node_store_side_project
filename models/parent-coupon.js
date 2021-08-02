@@ -24,11 +24,11 @@ const ParentCoupon = sequelize.define("ParentCoupon", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  num_uses: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
+  // num_uses: {
+  //   type: DataTypes.INTEGER,
+  //   allowNull: false,
+  //   defaultValue: 1,
+  // },
 
   // ################## FUTURE PLAN
   //   min_order: {
