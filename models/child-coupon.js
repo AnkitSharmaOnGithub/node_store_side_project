@@ -33,12 +33,21 @@ const ChildCoupon = sequelize.define("ChildCoupon", {
   linked_user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: {
-        tableName: "Users",
-      },
-      key: "id",
-    },
+    // references: {
+    //   model: {
+    //     tableName: "Users",
+    //   },
+    //   key: "id",
+    // },
+  },
+  is_active: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  num_uses: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
   },
 
   // ################## FUTURE PLAN
