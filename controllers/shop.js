@@ -477,7 +477,7 @@ exports.applyCoupon = async (req, res, next) => {
       throw errorHandler(error);
     }
 
-    // #TODO Check if coupon exists and is active or not, if the date is within the limit date.
+    // Check if coupon exists and is active or not, if the date is within the limit date.
     const coupon_to_apply = await ChildCoupon.findAll({
       attributes: ["id", "num_uses", "start_date", "end_date"],
       where: {
@@ -495,7 +495,7 @@ exports.applyCoupon = async (req, res, next) => {
       throw errorHandler(error);
     }
 
-    // #TODO Check if num_uses > 0
+    // Check if num_uses > 0
     if (coupon_to_apply.num_uses < 1) {
       const error = new Error(
         `The coupon has been applied to the maximum limit`
@@ -504,6 +504,16 @@ exports.applyCoupon = async (req, res, next) => {
     }
 
     // #TODO Check if current_date between start_date and end_date
+    const currentDate = new Date();
+    const coupon_start_date = new Date(coupon_to_apply.start_date);
+    const coupon_end_date = new Date(coupon_to_apply.end_date);
+
+    if (currentDate < coupon_start_date || currentDate > coupon_end_date) {
+      const error = new Error(
+        `The coupon is not valid during the specified period.`
+      );
+      throw errorHandler(error);
+    }
 
     // #TODO If yes, get the user cart and store the coupon against the cart.
 
