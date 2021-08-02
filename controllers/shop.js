@@ -10,6 +10,7 @@ const sequelize = require("../utils/database");
 
 // Stripe Initialization
 const Helper = require("../utils/helper");
+const ChildCoupon = require("../models/child-coupon");
 
 // Get config from .dotenv
 require("dotenv").config();
@@ -390,7 +391,6 @@ exports.createSession = async (req, res, next) => {
 
 exports.create = function (req, res, next) {};
 
-
 exports.payment_success = (req, res, next) => {
   console.log(req);
   return res.json({
@@ -407,6 +407,121 @@ exports.payment_cancel = (req, res, next) => {
 
 // Coupon Handers
 
-exports.getCoupon = (req, res, next) => {};
+exports.getCoupon = async (req, res, next) => {
+  try {
+    const userId = req.session.userId;
 
-exports.createCoupon = (req, res, next) => {};
+    // Fetch user specific coupons
+    const childCoupons = await ChildCoupon.findAll({
+      attributes: [
+        "id",
+        "parent_key",
+        "child_discount_code",
+        "start_date",
+        "end_date",
+        "linked_user_id",
+        "is_active",
+        "num_uses",
+        "ParentCouponId",
+      ],
+      where: {
+        linked_user_id: userId,
+        is_active: 1,
+      },
+      raw: true,
+    });
+
+    // Fetch general coupons
+    const generalCoupons = await ChildCoupon.findAll({
+      attributes: [
+        "id",
+        "parent_key",
+        "child_discount_code",
+        "start_date",
+        "end_date",
+        "linked_user_id",
+        "is_active",
+        "num_uses",
+        "ParentCouponId",
+      ],
+      where: {
+        linked_user_id: 0,
+        is_active: 1,
+      },
+      raw: true,
+    });
+
+    if (childCoupons.length == 0 && generalCoupons.length == 0) {
+      res.json({
+        message: "No coupons exists for the user",
+        data: null,
+      });
+    }
+
+    res.json({
+      message: "Coupons fetched",
+      data: { childCoupons, generalCoupons },
+    });
+  } catch (error) {
+    next(errorHandler(error));
+  }
+};
+
+exports.applyCoupon = async (req, res, next) => {
+  try {
+    const userId = req.session.userId;
+    const { discount_code } = req.body;
+
+    if (!discount_code) {
+      const error = new Error(`The discount code has not been provided`);
+      throw errorHandler(error);
+    }
+
+    // #TODO Check if coupon exists and is active or not, if the date is within the limit date.
+    const coupon_to_apply = await ChildCoupon.findAll({
+      attributes: ["id", "num_uses", "start_date", "end_date"],
+      where: {
+        child_discount_code: discount_code,
+        is_active: 1,
+        num_uses: {
+          [Op.gt]: 1,
+        },
+      },
+      raw: true,
+    });
+
+    if (!coupon_to_apply) {
+      const error = new Error(`The applied coupon code is not valid`);
+      throw errorHandler(error);
+    }
+
+    // #TODO Check if num_uses > 0
+    if (coupon_to_apply.num_uses < 1) {
+      const error = new Error(
+        `The coupon has been applied to the maximum limit`
+      );
+      throw errorHandler(error);
+    }
+
+    // #TODO Check if current_date between start_date and end_date
+
+    // #TODO If yes, get the user cart and store the coupon against the cart.
+
+    // #####################
+    // #TODO During order success, update num_uses by +1 (ANOTHER CONTROLLER).
+
+    res.json({
+      data: coupon_to_apply,
+    });
+  } catch (err) {
+    next(errorHandler(err));
+  }
+};
+
+exports.clearCoupon = async (req, res, next) => {
+  const userId = req.session.userId;
+
+  // #TODO Get the user cart.
+
+  // #TODO Remove the coupon against the cart.
+};
