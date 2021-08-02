@@ -8,6 +8,9 @@ const Cart = sequelize.define("cart", {
     allowNull: false,
     primaryKey: true,
   },
+  discount_code: {
+    type: DataTypes.STRING,
+  },
 });
 
 module.exports = Cart;
