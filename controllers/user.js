@@ -67,7 +67,7 @@ exports.signIn = async (req, res, next) => {
         userId: user.id.toString(),
       },
       "some@secret#",
-      { expiresIn: "1h" }
+      { expiresIn: "12h" }
     );
 
     res.status(200).json({
