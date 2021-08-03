@@ -3,6 +3,7 @@ const sequelize = new Sequelize("node_store_side_project", "root", "", {
   host: "localhost",
   dialect: "mysql",
   logging: false,
+  logQueryParameters: true,
 });
 
 sequelize
