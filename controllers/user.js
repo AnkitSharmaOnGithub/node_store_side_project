@@ -63,7 +63,7 @@ exports.signIn = async (req, res, next) => {
 
     const token = jwt.sign(
       {
-        email: user.email,
+        // email: user.email,
         userId: user.id.toString(),
       },
       "some@secret#",
