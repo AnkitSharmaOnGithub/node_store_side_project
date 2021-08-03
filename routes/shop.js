@@ -36,16 +36,18 @@ router.get("/product/:id", shopController.getProduct);
 
 // ########## Stripe Routes
 
-router.post("/payment", shopController.createSession);
+router.post("/payment", isAuth, shopController.createSession);
 
-router.get("/payment_success", shopController.createSession);
+router.get("/payment_success", isAuth, shopController.createSession);
 
-router.get("/payment_cancel", shopController.createSession);
+router.get("/payment_cancel", isAuth, shopController.createSession);
 
 // ########## Coupon Routes
 
-router.get("/coupon", shopController.getCoupon);
+router.get("/coupon", isAuth, shopController.getCoupon);
 
-router.post("/applyCoupon", shopController.applyCoupon);
+router.post("/applyCoupon", isAuth, shopController.applyCoupon);
+
+router.get("/clearCoupon", isAuth, shopController.clearCoupon);
 
 module.exports = router;
