@@ -192,7 +192,7 @@ exports.getCart = async (req, res, next) => {
   try {
     const userId = req.session.userId;
 
-    const cart = await Cart.findAll({
+    const cartItems = await Cart.findAll({
       attributes: ["discount_code"],
       where: { userId: userId },
       include: [
@@ -204,9 +204,38 @@ exports.getCart = async (req, res, next) => {
       ],
     });
 
+    const amounts = await sequelize.query(
+      `
+      select
+	    SUM(ci.totalAmount) as 'totalAmount',
+      pc.discount_amount,
+	    SUM(ci.totalAmount) - pc.discount_amount as 'discountedAmount'
+      from
+        carts c
+      left join
+          cartitems ci 
+      on
+        c.id = ci.cartId
+      left join
+        childcoupons cc
+      on
+        c.discount_code = cc.child_discount_code
+      left join parentcoupons pc 
+      on pc.key = cc.parent_key 
+      where
+        c.UserId = ${userId}
+      group by
+        c.id
+    `,
+      { type: QueryTypes.SELECT }
+    );
+
     res.json({
       message: "success",
-      data: cart,
+      data: cartItems,
+      cartAmount: +amounts[0].totalAmount,
+      discountedCartAmount: +amounts[0].discountedAmount,
+      discount_amount: +amounts[0].discount_amount,
     });
   } catch (err) {
     res.json(err);
@@ -470,7 +499,6 @@ exports.getCoupon = async (req, res, next) => {
 exports.applyCoupon = async (req, res, next) => {
   try {
     const userId = req.session.userId;
-    console.log(userId);
     const { discount_code } = req.body;
 
     if (!discount_code) {
