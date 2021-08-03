@@ -193,7 +193,7 @@ exports.getCart = async (req, res, next) => {
     const userId = req.session.userId;
 
     const cart = await Cart.findAll({
-      attributes: [],
+      attributes: ["discount_code"],
       where: { userId: userId },
       include: [
         {
@@ -470,6 +470,7 @@ exports.getCoupon = async (req, res, next) => {
 exports.applyCoupon = async (req, res, next) => {
   try {
     const userId = req.session.userId;
+    console.log(userId);
     const { discount_code } = req.body;
 
     if (!discount_code) {
@@ -520,21 +521,20 @@ exports.applyCoupon = async (req, res, next) => {
       throw errorHandler(error);
     }
 
-    // #TODO If yes, get the user cart and store the coupon against the cart.
+    // If yes, get the user cart and store the coupon against the cart.
     const result = await Cart.update(
       {
         discount_code: discount_code,
       },
-      { where: { userId: +userId } },
-      { logging: console.log }
+      { where: { userId: +userId }, logging: console.log }
     );
 
     // #####################
     // #TODO During order success, update num_uses by +1 (ANOTHER CONTROLLER).
 
     res.json({
+      status: 1,
       message: "Coupon successfully applied",
-      data: result,
     });
   } catch (err) {
     next(errorHandler(err));
@@ -542,9 +542,42 @@ exports.applyCoupon = async (req, res, next) => {
 };
 
 exports.clearCoupon = async (req, res, next) => {
-  const userId = req.session.userId;
+  try {
+    const userId = req.session.userId;
 
-  // #TODO Get the user cart.
+    if (!userId) {
+      const error = new Error(`No user signed in.Please sign in to continue.`);
+      throw errorHandler(error);
+    }
 
-  // #TODO Remove the coupon against the cart.
+    // Get the user cart.
+    // Remove the coupon against the cart.
+    const result = await Cart.update(
+      {
+        discount_code: null,
+      },
+      {
+        where: {
+          userId: +userId,
+          discount_code: {
+            [Op.ne]: null,
+          },
+        },
+        plain: true,
+      }
+    );
+
+    if (result[0] === 1) {
+      res.json({
+        message: "Coupon cleared successfully",
+      });
+    } else {
+      const error = new Error(
+        `No coupon is applied to the cart. Please apply a coupon to clear.`
+      );
+      throw errorHandler(error);
+    }
+  } catch (err) {
+    next(err);
+  }
 };
