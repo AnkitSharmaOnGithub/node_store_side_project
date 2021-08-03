@@ -5,6 +5,8 @@ const errorHandler = require("./error.handler");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 
+require("dotenv").config();
+
 exports.signUp = async (req, res, next) => {
   const { email, password } = req.body;
   const errors = validationResult(req);
@@ -66,7 +68,7 @@ exports.signIn = async (req, res, next) => {
         // email: user.email,
         userId: user.id.toString(),
       },
-      "some@secret#",
+      process.env.JWT_SECRET,
       { expiresIn: "12h" }
     );
 
