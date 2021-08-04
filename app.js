@@ -76,6 +76,8 @@ const WishList = require("./models/wishlist");
 const WishListItem = require("./models/wishlist-item");
 const ParentCoupon = require("./models/parent-coupon");
 const ChildCoupon = require("./models/child-coupon");
+const Order = require("./models/order");
+const OrderItem = require("./models/order-items");
 
 // Add the error handler route
 app.use((error, req, res, next) => {
@@ -103,6 +105,12 @@ Product.belongsToMany(Cart, { through: CartItem });
 
 ParentCoupon.hasMany(ChildCoupon);
 ChildCoupon.belongsTo(ParentCoupon);
+
+User.hasMany(Order);
+Order.belongsTo(User);
+
+Product.belongsToMany(Order, { through: OrderItem });
+Order.belongsToMany(Product, { through: OrderItem });
 
 // Syncing sequelize models with the database
 sequelize
