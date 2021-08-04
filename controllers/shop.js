@@ -386,11 +386,11 @@ exports.addToWishlist = async (req, res, next) => {
 exports.createSession = async (req, res, next) => {
   try {
     // Get product details
-    const { stripeToken } = req.body;
+    const { stripeToken, cartAmount } = req.body;
 
     stripe.charges
       .create({
-        amount: 1000,
+        amount: cartAmount * 100,
         currency: "inr",
         source: stripeToken.id,
         capture: false, // note that capture: false
